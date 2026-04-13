@@ -39,17 +39,11 @@ claude skill install ./extract-skill
 
 ### 支持范围
 
-| 场景 | 状态 | 说明 |
-|---|---|---|
-| 英文博客 / 文档 / GitHub / Wikipedia | ✅ | |
-| 中文站点（雪球 / CSDN / 掘金 / 头条） | ✅ | |
-| 微信公众号文章 | ✅ | Worker 云端处理 |
-| Twitter / X | ✅ | |
-| 日文 / 多语言 | ✅ | |
-| 知乎专栏 | ⚠️ | 反爬限制，可能截断 |
-| SPA 页面（OpenAI docs 等） | ⚠️ | JS 渲染页，骨架内容 |
-| 扫描版 PDF | ⚠️ | 大部分可处理，复杂表格/公式可能丢失 |
-| 登录后才可见的内容 | ❌ | 无登录态 |
+- ✅ **大部分公开网页** — 博客、文档站、新闻、社交媒体、Wiki，中英日多语言
+- ✅ **数字版 PDF / DOCX** — 本地解析，零网络
+- ✅ **反爬站点** — 微信公众号等通过云端引擎处理
+- ⚠️ **扫描版 PDF / 重 JS 渲染页** — 大部分可处理，复杂场景质量有限
+- ❌ **需要登录的内容** — 无法携带登录态
 
 ### 隐私模式
 
@@ -113,17 +107,11 @@ Four-layer fallback, local-first:
 
 ### Supported Content
 
-| Source | Status | Notes |
-|---|---|---|
-| English blogs / docs / GitHub / Wikipedia | ✅ | |
-| Chinese sites (Xueqiu / CSDN / Juejin) | ✅ | |
-| WeChat articles | ✅ | Processed via cloud worker |
-| Twitter / X | ✅ | |
-| Japanese / multilingual | ✅ | |
-| Zhihu columns | ⚠️ | Anti-scraping may truncate content |
-| SPA pages (OpenAI docs, etc.) | ⚠️ | JS-rendered, skeleton content only |
-| Scanned PDFs | ⚠️ | Most work; complex tables/formulas may be lost |
-| Login-required content | ❌ | No auth session |
+- ✅ **Most public web pages** — blogs, docs, news, social media, wikis, multilingual
+- ✅ **Digital PDFs / DOCX** — parsed locally, zero network
+- ✅ **Anti-scraping sites** — WeChat articles etc. handled via cloud engine
+- ⚠️ **Scanned PDFs / heavy JS pages** — mostly works, limited quality in complex cases
+- ❌ **Login-required content** — no auth session available
 
 ### Privacy Mode
 
