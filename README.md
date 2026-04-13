@@ -65,6 +65,17 @@ python3 extract.py --local-only /path/to/confidential.pdf /tmp/output.md
 pip install pdfplumber mammoth  # 本地 PDF/DOCX 处理，推荐安装，省配额
 ```
 
+### 合规声明
+
+本工具仅供个人学习、研究和合法用途。使用时请遵守：
+
+- **robots.txt** — 本工具通过第三方 API（Jina Reader 等）获取公开网页内容，这些服务自行处理 robots.txt 合规。本地处理（PDF/DOCX）不涉及爬虫行为。
+- **版权与合理使用** — 提取的内容受原始版权保护。用户有责任确保其使用符合当地法律和目标网站的服务条款。本工具不存储、传播或公开提取的内容。
+- **速率限制** — 云端处理有每日 50 次免费配额限制，防止滥用。请勿绕过此限制进行批量抓取。
+- **禁止事项** — 不得用于：绕过付费墙或访问限制；批量采集用于训练数据集；侵犯他人隐私或知识产权。
+
+使用本工具即表示您同意自行承担合规责任。
+
 ---
 
 ## English
@@ -127,6 +138,17 @@ python3 extract.py --local-only /path/to/confidential.pdf /tmp/output.md
 ```bash
 pip install pdfplumber mammoth  # Local PDF/DOCX processing, recommended
 ```
+
+### Compliance
+
+This tool is intended for personal learning, research, and lawful purposes only.
+
+- **robots.txt** — Web content is fetched via third-party APIs (Jina Reader, etc.) that handle robots.txt compliance on their end. Local processing (PDF/DOCX) involves no crawling.
+- **Copyright & fair use** — Extracted content remains under its original copyright. You are responsible for ensuring your use complies with local laws and the target site's terms of service. This tool does not store, redistribute, or publish extracted content.
+- **Rate limiting** — Cloud processing is capped at 50 free requests/day to prevent abuse. Do not circumvent this limit for bulk scraping.
+- **Prohibited uses** — Do not use this tool to: bypass paywalls or access restrictions; bulk-harvest content for training datasets; infringe on others' privacy or intellectual property.
+
+By using this tool, you accept full responsibility for compliance.
 
 ---
 
