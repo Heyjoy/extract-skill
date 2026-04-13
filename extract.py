@@ -257,16 +257,6 @@ def extract(source: str) -> dict:
         _progress(f"正在连接云端服务...")
         if not _worker_healthy():
             _progress("⚠️ 云端服务暂时不可用")
-            # PDF fallback 到本地 pdfplumber（如果有的话）
-            if kind == "pdf":
-                _progress("尝试本地处理...")
-                md = local_pdf(source)
-                if md:
-                    qc = quality_check(md, kind)
-                    if qc["ok"]:
-                        result.update(content=md, meta={**result["meta"], "engine": "local_pdfplumber", "layer": 1, "confidence": qc["confidence"], "chars": len(md)})
-                        cache_set(source, result)
-                        return result
             result["meta"]["warnings"] = ["worker_unavailable"]
             result["meta"]["suggestion"] = "云端服务暂时不可用。请稍后重试，或使用 --local-only 模式本地处理。"
             return result
@@ -288,16 +278,7 @@ def extract(source: str) -> dict:
                 return result
             _progress(f"云端返回内容质量不足 ({qc['warnings']})")
 
-        # PDF 云端失败 → 最后 fallback 到本地 pdfplumber
-        if kind == "pdf":
-            _progress("云端处理失败，尝试本地 pdfplumber...")
-            md = local_pdf(source)
-            if md:
-                qc = quality_check(md, kind)
-                if qc["ok"]:
-                    result.update(content=md, meta={**result["meta"], "engine": "local_pdfplumber", "layer": 1, "confidence": qc["confidence"], "chars": len(md), "warnings": ["cloud_failed_local_fallback"]})
-                    cache_set(source, result)
-                    return result
+        _progress("云端处理失败")
 
     # 全部失败
     result["meta"]["warnings"] = ["all_layers_failed"]
