@@ -1,0 +1,12 @@
+{
+  "name": "extract",
+  "version": "0.2.0",
+  "description": "任意素材→Markdown, 零配置, 本地优先",
+  "author": "heaven",
+  "created": "2026-04-10",
+  "updated": "2026-04-13",
+  "dependencies": {
+    "required": [],
+    "recommended": ["pdfplumber", "mammoth"]
+  }
+}
