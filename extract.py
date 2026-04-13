@@ -169,6 +169,28 @@ def call_worker(source: str, kind: str) -> Optional[str]:
         return None
 
 
+# === Progress + Health ===
+
+def _progress(msg: str):
+    """进度输出到 stderr — Agent 和用户都能看到, 不污染 stdout 结果。"""
+    import sys
+    print(f"[extract] {msg}", file=sys.stderr, flush=True)
+
+
+def _worker_healthy() -> bool:
+    """快速检查 Worker /health (2s timeout)。返回 False = Worker 挂了。"""
+    import urllib.request, urllib.error
+    try:
+        req = urllib.request.Request(
+            f"{WORKER_URL}/health",
+            headers={"User-Agent": "extract-skill-health/1.0"},
+        )
+        with urllib.request.urlopen(req, timeout=2) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
 # === Main Entry ===
 
 def extract(source: str) -> dict:
@@ -210,19 +232,11 @@ def extract(source: str) -> dict:
             result["meta"]["warnings"] = ["local_extraction_failed"]
         return result
 
-    # === 正常模式: 调 Worker ===
+    # === 正常模式（云优先）===
+    # PDF/URL → Worker（Worker 内部路由: Tunnel→内网引擎 或 fallback→Jina/LlamaParse）
+    # DOCX/text → 本地处理（Worker 没有 DOCX 端点）
 
-    # 文件类型先尝试本地（零成本），失败再走 Worker
-    if kind == "pdf":
-        md = local_pdf(source)
-        if md:
-            qc = quality_check(md, kind)
-            if qc["ok"]:
-                result.update(content=md, meta={**result["meta"], "engine": "local_pdfplumber", "layer": 1, "confidence": qc["confidence"], "chars": len(md)})
-                cache_set(source, result)
-                return result
-
-    elif kind == "docx":
+    if kind == "docx":
         md = local_docx(source)
         if md:
             qc = quality_check(md, kind)
@@ -237,14 +251,53 @@ def extract(source: str) -> dict:
             cache_set(source, result)
             return result
 
-    # Worker 处理（URL / 本地失败的 PDF）
-    md = call_worker(source, kind)
-    if md:
-        qc = quality_check(md, kind)
-        if qc["ok"]:
-            result.update(content=md, meta={**result["meta"], "engine": "worker", "layer": 2, "confidence": qc["confidence"], "chars": len(md)})
-            cache_set(source, result)
+    # URL / PDF → Worker 云端处理
+    if kind in ("url", "pdf"):
+        # 预检: Worker 是否在线
+        _progress(f"正在连接云端服务...")
+        if not _worker_healthy():
+            _progress("⚠️ 云端服务暂时不可用")
+            # PDF fallback 到本地 pdfplumber（如果有的话）
+            if kind == "pdf":
+                _progress("尝试本地处理...")
+                md = local_pdf(source)
+                if md:
+                    qc = quality_check(md, kind)
+                    if qc["ok"]:
+                        result.update(content=md, meta={**result["meta"], "engine": "local_pdfplumber", "layer": 1, "confidence": qc["confidence"], "chars": len(md)})
+                        cache_set(source, result)
+                        return result
+            result["meta"]["warnings"] = ["worker_unavailable"]
+            result["meta"]["suggestion"] = "云端服务暂时不可用。请稍后重试，或使用 --local-only 模式本地处理。"
             return result
+
+        # 上传 + 处理
+        if kind == "pdf":
+            file_size = os.path.getsize(source)
+            _progress(f"上传 PDF ({file_size // 1024}KB)...")
+        else:
+            _progress(f"提取中...")
+
+        md = call_worker(source, kind)
+        if md:
+            qc = quality_check(md, kind)
+            if qc["ok"]:
+                _progress("完成")
+                result.update(content=md, meta={**result["meta"], "engine": "worker", "layer": 2, "confidence": qc["confidence"], "chars": len(md)})
+                cache_set(source, result)
+                return result
+            _progress(f"云端返回内容质量不足 ({qc['warnings']})")
+
+        # PDF 云端失败 → 最后 fallback 到本地 pdfplumber
+        if kind == "pdf":
+            _progress("云端处理失败，尝试本地 pdfplumber...")
+            md = local_pdf(source)
+            if md:
+                qc = quality_check(md, kind)
+                if qc["ok"]:
+                    result.update(content=md, meta={**result["meta"], "engine": "local_pdfplumber", "layer": 1, "confidence": qc["confidence"], "chars": len(md), "warnings": ["cloud_failed_local_fallback"]})
+                    cache_set(source, result)
+                    return result
 
     # 全部失败
     result["meta"]["warnings"] = ["all_layers_failed"]
@@ -252,7 +305,7 @@ def extract(source: str) -> dict:
         "提取失败。可能原因:\n"
         "1. URL/文件路径不正确\n"
         "2. 需要登录才能访问的页面\n"
-        "3. 服务暂时不可用，请稍后重试"
+        "3. 云端服务暂时不可用 — 稍后重试或用 --local-only 模式"
     )
     return result
 
